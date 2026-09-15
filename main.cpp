@@ -1,113 +1,68 @@
 #include <iostream>
-#include <iomanip>
 #include <cmath>
-#include <cstddef>
 
 #include "Fields/ScalarField3D.hpp"
-#include "Operators/Laplacian.hpp"
+#include "Operators/Gradient.hpp"
 
 int main()
 {
-    std::cout << std::fixed << std::setprecision(10);
+    const std::size_t N = 20;
 
-    std::cout << "============================================\n";
-    std::cout << " FOURTH-ORDER LAPLACIAN TEST\n";
-    std::cout << "============================================\n\n";
+    double h = 0.1;
 
-    // Point at which we evaluate the Laplacian.
-    const double x = 0.7;
-    const double y = 0.8;
-    const double z = 0.9;
+    Onko::ScalarField3D f(N, N, N);
 
-    // Grid spacings for the convergence test.
-    const double spacings[] = {0.2, 0.1, 0.05, 0.025};
-
-    // Our fourth-order central stencil requires
-    // two points on each side of the point being tested.
-    const std::size_t Nx = 5;
-    const std::size_t Ny = 5;
-    const std::size_t Nz = 5;
-
-    // Center point of the grid.
-    const std::size_t i = 2;
-    const std::size_t j = 2;
-    const std::size_t k = 2;
-
-    double previous_error = 0.0;
-
-    for (double h : spacings)
+    // Fill the field
+    for (std::size_t k = 0; k < N; ++k)
     {
-        Onko::ScalarField3D f(Nx, Ny, Nz);
-
-        // Define
-        //
-        // f(x,y,z) = sin(x) + sin(y) + sin(z)
-        //
-        // throughout the grid.
-
-        for (std::size_t ii = 0; ii < Nx; ++ii)
+        for (std::size_t j = 0; j < N; ++j)
         {
-            for (std::size_t jj = 0; jj < Ny; ++jj)
+            for (std::size_t i = 0; i < N; ++i)
             {
-                for (std::size_t kk = 0; kk < Nz; ++kk)
-                {
-                    double xi =
-                        x + (static_cast<double>(ii) - 2.0) * h;
+                double x = i * h;
+                double y = j * h;
+                double z = k * h;
 
-                    double yj =
-                        y + (static_cast<double>(jj) - 2.0) * h;
-
-                    double zk =
-                        z + (static_cast<double>(kk) - 2.0) * h;
-
-                    f(ii, jj, kk) =
-                        std::sin(xi)
-                        + std::sin(yj)
-                        + std::sin(zk);
-                }
+                f(i, j, k) = std::sin(x)
+                            + std::sin(y)
+                            + std::sin(z);
             }
         }
-
-        // Numerical Laplacian.
-        double numerical =
-            Onko::Laplacian(f, i, j, k, h);
-
-        // Exact Laplacian:
-        //
-        // ∇²f = -sin(x) - sin(y) - sin(z)
-
-        double exact =
-            -std::sin(x)
-            -std::sin(y)
-            -std::sin(z);
-
-        // Absolute error.
-        double error =
-            std::abs(numerical - exact);
-
-        std::cout << "h = " << h
-                  << "    numerical = " << numerical
-                  << "    exact = " << exact
-                  << "    error = " << error;
-
-        // For a fourth-order method, when h is halved:
-        //
-        // error(h) / error(h/2) → 2^4 = 16
-
-        if (previous_error != 0.0)
-        {
-            double ratio =
-                previous_error / error;
-
-            std::cout << "    ratio = " << ratio;
-        }
-
-        std::cout << '\n';
-
-        previous_error = error;
     }
 
-    std::cout << "\nTest completed.\n";
+    // Interior point
+    std::size_t i = 8;
+    std::size_t j = 9;
+    std::size_t k = 7;
 
-    return 0;
+    double x = i * h;
+    double y = j * h;
+    double z = k * h;
+
+    Onko::Vector3D numerical = Onko::Gradient(f, i, j, k, h);
+
+    // Exact gradient
+    double exact_x = std::cos(x);
+    double exact_y = std::cos(y);
+    double exact_z = std::cos(z);
+
+    std::cout << "Numerical gradient:\n";
+    std::cout << "Dx = " << numerical.x << '\n';
+    std::cout << "Dy = " << numerical.y << '\n';
+    std::cout << "Dz = " << numerical.z << '\n';
+
+    std::cout << "\nExact gradient:\n";
+    std::cout << "Dx = " << exact_x << '\n';
+    std::cout << "Dy = " << exact_y << '\n';
+    std::cout << "Dz = " << exact_z << '\n';
+
+    std::cout << "\nErrors:\n";
+    std::cout << "Error x = "
+              << std::abs(numerical.x - exact_x) << '\n';
+
+    std::cout << "Error y = "
+              << std::abs(numerical.y - exact_y) << '\n';
+
+    std::cout << "Error z = "
+              << std::abs(numerical.z - exact_z) << '\n';
 }

@@ -18,7 +18,7 @@ namespace Onko
             return data[i + Nx * (j + Ny * k)];
         }
         const double& operator()(
-        std::size_t i, std::size_t j, std::size_t k) const
+            std::size_t i, std::size_t j, std::size_t k) const
         {
             return data[i + Nx * (j + Ny * k)];
         }

@@ -1,3 +1,4 @@
+//This is still an interior point operator. Works on Ghost nodes or boundary reworks arrives soon. 
 #pragma once
 #include<cstddef>
 #include "../Fields/ScalarField3D.hpp"

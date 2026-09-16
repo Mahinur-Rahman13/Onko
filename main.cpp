@@ -1,38 +1,23 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <algorithm>
 
 #include "Fields/VectorField3D.hpp"
 #include "Operators/Divergence.hpp"
 
-int main()
+double testDivergence(double h)
 {
-    const double pi = std::acos(-1.0);
+    const std::size_t N = 25;
 
-    // Grid sizes
-    const std::size_t Nx = 25;
-    const std::size_t Ny = 25;
-    const std::size_t Nz = 25;
+    Onko::VectorField3D u(N, N, N);
 
-    // Grid spacing
-    const double h = 0.1;
-
-    // Create vector field
-    Onko::VectorField3D u(Nx, Ny, Nz);
-
-    // --------------------------------------------------
-    // Define analytical vector field:
-    //
-    // u_x = sin(x)
-    // u_y = sin(y)
-    // u_z = sin(z)
-    // --------------------------------------------------
-
-    for (std::size_t k = 0; k < Nz; ++k)
+    // Fill vector field
+    for (std::size_t k = 0; k < N; ++k)
     {
-        for (std::size_t j = 0; j < Ny; ++j)
+        for (std::size_t j = 0; j < N; ++j)
         {
-            for (std::size_t i = 0; i < Nx; ++i)
+            for (std::size_t i = 0; i < N; ++i)
             {
                 double x = i * h;
                 double y = j * h;
@@ -45,42 +30,63 @@ int main()
         }
     }
 
-    // --------------------------------------------------
-    // Test at one interior point
-    // --------------------------------------------------
+    double maxError = 0.0;
 
-    std::size_t i = 10;
-    std::size_t j = 10;
-    std::size_t k = 10;
+    // Need two points on each side because
+    // your derivative stencil is fourth-order central.
+    for (std::size_t k = 2; k < N - 2; ++k)
+    {
+        for (std::size_t j = 2; j < N - 2; ++j)
+        {
+            for (std::size_t i = 2; i < N - 2; ++i)
+            {
+                double x = i * h;
+                double y = j * h;
+                double z = k * h;
 
-    double numerical = Onko::Divergence(u, i, j, k, h);
+                double numerical =
+                    Onko::Divergence(u, i, j, k, h);
 
-    double x = i * h;
-    double y = j * h;
-    double z = k * h;
+                double exact =
+                    std::cos(x)
+                    + std::cos(y)
+                    + std::cos(z);
 
-    // Exact divergence:
-    //
-    // d(sin x)/dx + d(sin y)/dy + d(sin z)/dz
-    // = cos x + cos y + cos z
+                double error =
+                    std::abs(numerical - exact);
 
-    double exact =
-        std::cos(x)
-        + std::cos(y)
-        + std::cos(z);
+                maxError = std::max(maxError, error);
+            }
+        }
+    }
 
-    double error = std::abs(numerical - exact);
+    return maxError;
+}
 
-    std::cout << std::setprecision(15);
+int main()
+{
+    std::cout << std::setprecision(10);
 
-    std::cout << "Numerical divergence = "
-              << numerical << '\n';
+    double h1 = 0.2;
+    double h2 = 0.1;
+    double h3 = 0.05;
+    double h4 = 0.025;
 
-    std::cout << "Exact divergence     = "
-              << exact << '\n';
+    double e1 = testDivergence(h1);
+    double e2 = testDivergence(h2);
+    double e3 = testDivergence(h3);
+    double e4 = testDivergence(h4);
 
-    std::cout << "Absolute error       = "
-              << error << '\n';
+    std::cout << "h = " << h1 << "  Error = " << e1 << '\n';
+    std::cout << "h = " << h2 << "  Error = " << e2 << '\n';
+    std::cout << "h = " << h3 << "  Error = " << e3 << '\n';
+    std::cout << "h = " << h4 << "  Error = " << e4 << '\n';
+
+    std::cout << "\nError ratios:\n";
+
+    std::cout << e1 / e2 << '\n';
+    std::cout << e2 / e3 << '\n';
+    std::cout << e3 / e4 << '\n';
 
     return 0;
 }

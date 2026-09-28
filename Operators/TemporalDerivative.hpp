@@ -1,6 +1,6 @@
 //Backward-Euler method
 #pragma once 
-namespace onko
+namespace Onko
 {
     inline double Dt(
         double current, 
